@@ -199,3 +199,16 @@ console.log(c);
 // (in white text)
 // abcd
 ```
+
+# Don't use `path.join()`. It is broken.
+
+Use `[a, b, c].join(path.sep)` instead. The reason is, `path.join` ignores empty string elements. This means when you split a path and join it back, the root directory will be missing on Unix systems. Example:
+
+```javascript
+const folders = '/an/example/absolute/path'.split(path.sep);
+// `folders` is `[ '', 'an', 'example', 'absolute', 'path' ]`
+path.join(...folders);
+// Returns `an/example/absolute/path` instead of `/an/example/absolute/path`
+folders.join(path.sep);
+// Returns `/an/example/absolute/path`
+```
