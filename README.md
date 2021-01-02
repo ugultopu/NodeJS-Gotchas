@@ -212,3 +212,35 @@ path.join(...folders);
 folders.join(path.sep);
 // Returns `/an/example/absolute/path`
 ```
+
+# `__dirname` does not return the link location on symbolic links
+However, on hard links, they return the link location. Example:
+
+/some/javascript/file/in/a/directory/link-test.js:
+
+```javascript
+console.log(__dirname);
+```
+
+A shell session in a directory named `/a/directory/that/is/not/the/directory/of/the/test/file`:
+
+```shell
+$ pwd
+/a/directory/that/is/not/the/directory/of/the/test/file
+$ node /some/javascript/file/in/a/directory/link-test.js
+/some/javascript/file/in/a/directory
+$ ln -s /some/javascript/file/in/a/directory/link-test.js
+$ ls -l link-test.js
+link-test.js -> /some/javascript/file/in/a/directory/link-test.js
+$ node link-test.js
+/some/javascript/file/in/a/directory
+# Hoped it to print `/a/directory/that/is/not/the/directory/of/the/test/file` instead of `/some/javascript/file/in/a/directory`
+$ rm link-test.js
+$ ln /some/javascript/file/in/a/directory/link-test.js
+$ ls -l link-test.js
+link-test.js
+$ node link-test.js
+/a/directory/that/is/not/the/directory/of/the/test/file
+```
+
+As a side note, I think this is why `pnpm` uses hard links, instead of soft links.
