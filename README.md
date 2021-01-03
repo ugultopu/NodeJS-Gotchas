@@ -244,3 +244,78 @@ $ node link-test.js
 ```
 
 As a side note, I think this is why `pnpm` uses hard links, instead of soft links.
+
+# When you run an npm script, the working directory is always the root of the repository.
+
+Example:
+
+```shell
+$ pwd
+/an/absolute/path/to/some/project
+$ ls -al
+total 104
+drwxr-xr-x  21 utku  staff   672  2 Jan 20:46 .
+drwxr-xr-x  19 utku  staff   608  2 Jan 13:56 ..
+drwxr-xr-x   4 utku  staff   128  2 Jan 20:21 node_modules
+-rw-r--r--   1 utku  staff    45  2 Jan 20:45 package.json
+drwxr-xr-x   8 utku  staff   256  2 Jan 20:48 some-directory
+$ cat package.json 
+{
+  "scripts": {
+    "dirTest": "asdf"
+  }
+}
+$ tree -a node_modules/
+node_modules/
+├── .bin
+│   └── asdf -> ../working-directory-test/test.js
+└── working-directory-test
+    └── test.js
+
+2 directories, 2 files
+$ cat node_modules/.bin/asdf 
+#!/usr/bin/env node
+console.log('Working directory is:');
+console.log(process.cwd());
+console.log();
+console.log('__dirname is:');
+console.log(__dirname);
+$ cd some-directory/some-subdirectory
+$ pwd
+/an/absolute/path/to/some/project/some-directory/some-subdirectory
+$ npx asdf
+Working directory is:
+/an/absolute/path/to/some/project/some-directory/some-subdirectory
+
+__dirname is:
+/an/absolute/path/to/some/project/node_modules/working-directory-test
+$ npm run dirTest
+
+> dirTest
+> asdf
+
+Working directory is:
+/an/absolute/path/to/some/project
+
+__dirname is:
+/an/absolute/path/to/some/project/node_modules/working-directory-test
+$ npx dirTest
+npm ERR! code E404
+npm ERR! 404 Not Found - GET https://registry.npmjs.org/dirTest - Not found
+npm ERR! 404 
+npm ERR! 404  'dirTest@latest' is not in the npm registry.
+npm ERR! 404 This package name is not valid, because 
+npm ERR! 404  1. name can no longer contain capital letters
+npm ERR! 404 
+npm ERR! 404 Note that you can also install from a
+npm ERR! 404 tarball, folder, http url, or git url.
+
+npm ERR! A complete log of this run can be found in:
+npm ERR!     ~/.npm/_logs/2021-01-03T01_57_10_590Z-debug.log
+$ npm run asdf
+npm ERR! missing script: asdf
+
+npm ERR! A complete log of this run can be found in:
+npm ERR!     ~/.npm/_logs/2021-01-03T01_57_19_669Z-debug.log
+$ 
+```
